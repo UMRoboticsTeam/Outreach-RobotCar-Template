@@ -14,15 +14,26 @@
 //Servo motor pin
 #define ULTRA_Serv 10 //servo motor for ultra sensor.
 
-
-void setup() {
-  
-  
-}
+//Pin that receives IR Remote data.
+#define IR_RECEIVE_PIN 9
 
 void loop() {
-  
-  
+
+
+  if (IrReceiver.decode()) {
+      if(running){
+        driveStop();
+        running = false;
+      }else{
+        combat();
+        running = true;
+      }
+      IrReceiver.resume(); // Enable receiving of the next value
+  }
+}
+
+void combat(){
+  driveForward(255);
 }
 
 /*
