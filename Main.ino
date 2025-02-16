@@ -1,4 +1,6 @@
 #include <Servo.h>
+#include <IRremote.hpp>
+
 
 //Motor Pin definitions. A = Right, B = Left
 #define PIN_Motor_PWMA 5 //right motor PWM
@@ -7,6 +9,11 @@
 #define PIN_Motor_AIN_1 7
 #define PIN_Motor_STBY 3
 
+//Line tracker pins
+#define PIN_ITR20001_L A2
+#define PIN_ITR20001_M A1
+#define PIN_ITR20001_R A0
+
 //Ultrasonic PIN definitions
 #define ECHO 12
 #define TRIG 13
@@ -14,27 +21,42 @@
 //Servo motor pin
 #define ULTRA_Serv 10 //servo motor for ultra sensor.
 
-//Pin that receives IR Remote data.
 #define IR_RECEIVE_PIN 9
+
+
+decode_results results;
+boolean running = false;
+void setup() {
+  LineTrackerSetup();
+  Serial.begin(9600);
+  IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
+}
 
 void loop() {
 
-
   if (IrReceiver.decode()) {
+      Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX); // Print "old" raw data
+      IrReceiver.printIRResultShort(&Serial); // Print complete received data in one line
+      IrReceiver.printIRSendUsage(&Serial);   // Print the statement required to send this data
       if(running){
         driveStop();
         running = false;
       }else{
-        combat();
         running = true;
       }
       IrReceiver.resume(); // Enable receiving of the next value
   }
+  if(running){
+    combat();
+  }
+    
 }
 
 void combat(){
-  driveForward(255);
+
+
 }
+
 
 /*
  * Uses Ultrasonic sensor to measure distance.
@@ -43,15 +65,22 @@ void combat(){
  */
 int measureDistance()
 {
-  digitalWrite(TRIG,LOW); //set Trigger to low
-  delayMicroseconds(20); //delaying to ensure trig is low.
-  digitalWrite(TRIG, HIGH); //Set to high
-  delayMicroseconds(10); // 10 send 10-microsecond oulse.
-  digitalWrite(TRIG, LOW); //set to low.
+  //Making sure trigger is disabled to avoid echos.
+  digitalWrite(TRIG,LOW);
+  delayMicroseconds(20); //waiting for echos to clear
+
+  //sending 10 microsecond pulse.
+  digitalWrite(TRIG, HIGH); 
+  delayMicroseconds(10); 
+
+  //disabling trigger
+  digitalWrite(TRIG, LOW); 
   delayMicroseconds(2);
   
   //calculating distance using speed of sound. Divide by 2 because sensor measures time of wave there and back
-  return (pulseIn(ECHO,HIGH)*0.034)/2; 
+  int distance = (pulseIn(ECHO,HIGH)*0.034)/2;
+ 
+  return distance;
 }
 
 /*
@@ -107,4 +136,22 @@ void driveStop(){
   digitalWrite(PIN_Motor_STBY, LOW);
   analogWrite(PIN_Motor_PWMA, 0);
   analogWrite(PIN_Motor_PWMB, 0);
+}
+
+float LineRight(){
+  return analogRead(PIN_ITR20001_R);
+}
+
+float LineMiddle(){
+  return analogRead(PIN_ITR20001_M);
+}
+float LineLeft(){
+  return analogRead(PIN_ITR20001_L);
+}
+
+
+void LineTrackerSetup(){
+  pinMode(PIN_ITR20001_R, INPUT);
+  pinMode(PIN_ITR20001_M, INPUT);
+  pinMode(PIN_ITR20001_L, INPUT);
 }
