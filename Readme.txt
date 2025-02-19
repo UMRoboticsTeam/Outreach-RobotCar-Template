@@ -19,9 +19,5 @@ Sensor:
 
 
 ToDo:
-    Required:
-    - UtraSonic Sensor
-    - IR Sensor
-    Nice to haves:
     - Camera
     - Gyro
