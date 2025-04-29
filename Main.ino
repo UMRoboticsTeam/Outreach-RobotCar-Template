@@ -23,6 +23,8 @@
 
 #define IR_RECEIVE_PIN 9
 
+unsigned long lastButtonTime = 0;
+const unsigned long buttonDelay = 600;
 
 decode_results results;
 boolean running = false;
@@ -33,18 +35,27 @@ void setup() {
 }
 
 void loop() {
+  
+  //Checks if an IR command has been received.
+  if (IrReceiver.decode() ) {
 
-  if (IrReceiver.decode()) {
-      Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX); // Print "old" raw data
-      IrReceiver.printIRResultShort(&Serial); // Print complete received data in one line
-      IrReceiver.printIRSendUsage(&Serial);   // Print the statement required to send this data
-      if(running){
+    //getting current time.
+    unsigned long now = millis();
+
+    //This is preventing double clicks. Hopefully. It's doing it's best okay.
+    if(now - lastButtonTime > buttonDelay){
+
+      //if the UP button on the remotes are pressed we will toggle the current state.
+      if(running && IrReceiver.decodedIRData.command == 0x46){
         driveStop();
         running = false;
-      }else{
+      }else if(IrReceiver.decodedIRData.command == 0x46){
         running = true;
       }
-      IrReceiver.resume(); // Enable receiving of the next value
+      
+    }
+    
+    IrReceiver.resume(); // Enable receiving of the next value
   }
   if(running){
     combat();
