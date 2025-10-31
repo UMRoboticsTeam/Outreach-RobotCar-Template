@@ -27,7 +27,7 @@ unsigned long lastButtonTime = 0;
 const unsigned long buttonDelay = 600;
 
 decode_results results;
-boolean running = false;
+bool running{false}; 
 void setup() {
   LineTrackerSetup();
   Serial.begin(9600);
@@ -37,26 +37,35 @@ void setup() {
 void loop() {
   
   //Checks if an IR command has been received.
-  if (IrReceiver.decode() ) {
+  // if (IrReceiver.decode() ) {
 
-    //getting current time.
-    unsigned long now = millis();
+  //   //getting current time.
+  //   unsigned long now = millis();
 
-    //This is preventing double clicks. Hopefully. It's doing it's best okay.
-    if(now - lastButtonTime > buttonDelay){
+  //   //This is preventing double clicks. Hopefully. It's doing it's best okay.
+  //   if(now - lastButtonTime > buttonDelay){
 
-      //if the UP button on the remotes are pressed we will toggle the current state.
-      if(running && IrReceiver.decodedIRData.command == 0x46){
-        driveStop();
-        running = false;
-      }else if(IrReceiver.decodedIRData.command == 0x46){
-        running = true;
-      }
+  //     //if the UP button on the remotes are pressed we will toggle the current state.
+  //     if(running && IrReceiver.decodedIRData.command == 0x46){
+  //       driveStop();
+  //       running = false;
+  //     }else if(IrReceiver.decodedIRData.command == 0x46){
+  //       running = true;
+  //     }
       
-    }
+  //   }
     
-    IrReceiver.resume(); // Enable receiving of the next value
+  //   IrReceiver.resume(); // Enable receiving of the next value
+  // }
+
+  //on first loop iteration, turn on the bot and drive endlessly 
+  if(!running){
+    delay(1000); 
+    driveStop(); 
+    running = true; 
   }
+
+  
   if(running){
     combat();
   }
