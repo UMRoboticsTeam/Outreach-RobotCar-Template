@@ -30,21 +30,13 @@ void setup() {
  pinMode(TRIG, OUTPUT);
  pinMode(ECHO, INPUT);
  Serial.println("Starting Program in 3 seconds");
- //delay(3000);
+ delay(3000);//3 second delay
 
 }
-float duration, distance;
 
 
 void loop() {
-  
-  //Serial.println(LineRight());
-  turnRight(100);
-  //Serial.println(measureDistance());
-}
 
-void combat(){
-  
 
 }
 

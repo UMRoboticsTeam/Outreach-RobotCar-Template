@@ -30,35 +30,22 @@ void setup() {
   LineTrackerSetup();
   Serial.begin(9600);
   IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
+  Serial.println("Starting Program in 3 seconds");
+  delay(3000);//3 second delay
 }
 
 void loop() {
 
-  if (IrReceiver.decode()) {
-      Serial.println(IrReceiver.decodedIRData.decodedRawData, HEX); // Print "old" raw data
-      IrReceiver.printIRResultShort(&Serial); // Print complete received data in one line
-      IrReceiver.printIRSendUsage(&Serial);   // Print the statement required to send this data
-      if(running){
-        driveStop();
-        running = false;
-      }else{
-        running = true;
-      }
-      IrReceiver.resume(); // Enable receiving of the next value
-  }
-  if(running){
-    combat();
-  }
-    
+
 }
 
 void combat(){
-  if(measureDistance()<62){
-    driveForward(255);
-  }else{
-    driveLeft(100);
-  }
-
+    delay(53); //prime number to prevent robots from pinging each other at the sametime.
+    if(measureDistance<40){
+      driveForward(255);
+    }else{
+      spinRight(100):
+    }
 }
 
 
