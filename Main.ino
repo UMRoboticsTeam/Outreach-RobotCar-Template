@@ -1,7 +1,5 @@
 #include <Servo.h>
-#include <IRremote.hpp>
-
-
+#include <string.h>
 //Motor Pin definitions. A = Right, B = Left
 #define PIN_Motor_PWMA 5 //right motor PWM
 #define PIN_Motor_PWMB 6 //left Motor PWM
@@ -23,57 +21,30 @@
 
 #define IR_RECEIVE_PIN 9
 
-unsigned long lastButtonTime = 0;
-const unsigned long buttonDelay = 600;
 
-decode_results results;
-bool running{false}; 
+
+
+ int time = 0;
 void setup() {
-  LineTrackerSetup();
-  Serial.begin(9600);
-  IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
+ Serial.begin(9600);
+ pinMode(TRIG, OUTPUT);
+ pinMode(ECHO, INPUT);
+ Serial.println("Starting Program in 3 seconds");
+ //delay(3000);
+
 }
+float duration, distance;
+
 
 void loop() {
   
-  //Checks if an IR command has been received.
-  // if (IrReceiver.decode() ) {
-
-  //   //getting current time.
-  //   unsigned long now = millis();
-
-  //   //This is preventing double clicks. Hopefully. It's doing it's best okay.
-  //   if(now - lastButtonTime > buttonDelay){
-
-  //     //if the UP button on the remotes are pressed we will toggle the current state.
-  //     if(running && IrReceiver.decodedIRData.command == 0x46){
-  //       driveStop();
-  //       running = false;
-  //     }else if(IrReceiver.decodedIRData.command == 0x46){
-  //       running = true;
-  //     }
-      
-  //   }
-    
-  //   IrReceiver.resume(); // Enable receiving of the next value
-  // }
-
-  //on first loop iteration, turn on the bot and drive endlessly 
-  if(!running){
-    delay(1000); 
-    driveStop(); 
-    running = true; 
-  }
-
-  
-  if(running){
-    combat();
-  }
-    
+  //Serial.println(LineRight());
+  turnRight(100);
+  //Serial.println(measureDistance());
 }
 
 void combat(){
-
+  
 
 }
 
@@ -83,24 +54,22 @@ void combat(){
  * 
  * returns an int value representing the distance of an object infront of the sensor in CM. 
  */
-int measureDistance()
+float measureDistance()
 {
   //Making sure trigger is disabled to avoid echos.
-  digitalWrite(TRIG,LOW);
-  delayMicroseconds(20); //waiting for echos to clear
-
-  //sending 10 microsecond pulse.
-  digitalWrite(TRIG, HIGH); 
-  delayMicroseconds(10); 
-
-  //disabling trigger
-  digitalWrite(TRIG, LOW); 
-  delayMicroseconds(2);
-  
-  //calculating distance using speed of sound. Divide by 2 because sensor measures time of wave there and back
-  int distance = (pulseIn(ECHO,HIGH)*0.034)/2;
- 
-  return distance;
+    float sum = 0;
+  const int samples = 5;
+  for (int i = 0; i < samples; i++) {
+    digitalWrite(TRIG, LOW);
+    delayMicroseconds(20);
+    digitalWrite(TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG, LOW);
+    long duration = pulseIn(ECHO, HIGH, 25000);
+    if (duration > 0) sum += (duration * 0.0343) / 2;
+    delay(10);
+  }
+  return sum / samples;
 }
 
 /*
@@ -130,7 +99,7 @@ void driveReverse(int speed){
 /*
  * Function turns the robot car to the right. Spins right left wheels forward, right wheels backward.
  */
-void driveRight(int speed){
+void spinRight(int speed){
   digitalWrite(PIN_Motor_STBY, HIGH);
   digitalWrite(PIN_Motor_AIN_1, LOW);
   digitalWrite(PIN_Motor_BIN_1, HIGH);
@@ -141,12 +110,28 @@ void driveRight(int speed){
 /*
  * Function turns the robot car to the right. Spins right left wheel backward, right wheels forward.
  */
-void driveLeft(int speed){
+void spinLeft(int speed){
   digitalWrite(PIN_Motor_STBY, HIGH);
   digitalWrite(PIN_Motor_AIN_1, HIGH);
   digitalWrite(PIN_Motor_BIN_1, LOW);
   analogWrite(PIN_Motor_PWMA, speed);
   analogWrite(PIN_Motor_PWMB, speed);
+}
+
+void turnLeft(int speed){
+  digitalWrite(PIN_Motor_STBY, HIGH);
+  digitalWrite(PIN_Motor_AIN_1, HIGH);
+  digitalWrite(PIN_Motor_BIN_1, HIGH);
+  analogWrite(PIN_Motor_PWMA, speed);
+  analogWrite(PIN_Motor_PWMB, 0);
+}
+
+void turnRight(int speed){
+    digitalWrite(PIN_Motor_STBY, HIGH);
+    digitalWrite(PIN_Motor_AIN_1, HIGH);
+    digitalWrite(PIN_Motor_BIN_1, HIGH);
+    analogWrite(PIN_Motor_PWMA, 0);
+    analogWrite(PIN_Motor_PWMB, speed);
 }
 
 /*
