@@ -36,19 +36,13 @@ int primeOffset[] = {11,37,61,97};
 
 void loop() {
   
-  
-  
   delay(60+primeOffset[1]);
-    
-    
+     
   if(measureDistance()<50){
     driveForward(255);
   }else{
     driveRight(150);
   }
-
-   
-
   
 }
 
