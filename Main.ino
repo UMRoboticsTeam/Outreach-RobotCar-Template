@@ -48,7 +48,7 @@ void loop() {
  * 
  * returns an int value representing the distance of an object infront of the sensor in CM. 
  */
-int measureDistance()
+float measureDistance()
 {
   //Making sure trigger is disabled to avoid echos.
     float sum = 0;
@@ -93,7 +93,7 @@ void driveReverse(int speed){
 /*
  * Function turns the robot car to the right. Spins right left wheels forward, right wheels backward.
  */
-void driveRight(int speed){
+void spinRight(int speed){
   digitalWrite(PIN_Motor_STBY, HIGH);
   digitalWrite(PIN_Motor_AIN_1, LOW);
   digitalWrite(PIN_Motor_BIN_1, HIGH);
@@ -104,12 +104,28 @@ void driveRight(int speed){
 /*
  * Function turns the robot car to the right. Spins right left wheel backward, right wheels forward.
  */
-void driveLeft(int speed){
+void spinLeft(int speed){
   digitalWrite(PIN_Motor_STBY, HIGH);
   digitalWrite(PIN_Motor_AIN_1, HIGH);
   digitalWrite(PIN_Motor_BIN_1, LOW);
   analogWrite(PIN_Motor_PWMA, speed);
   analogWrite(PIN_Motor_PWMB, speed);
+}
+
+void turnLeft(int speed){
+  digitalWrite(PIN_Motor_STBY, HIGH);
+  digitalWrite(PIN_Motor_AIN_1, HIGH);
+  digitalWrite(PIN_Motor_BIN_1, HIGH);
+  analogWrite(PIN_Motor_PWMA, speed);
+  analogWrite(PIN_Motor_PWMB, 0);
+}
+
+void turnRight(int speed){
+    digitalWrite(PIN_Motor_STBY, HIGH);
+    digitalWrite(PIN_Motor_AIN_1, HIGH);
+    digitalWrite(PIN_Motor_BIN_1, HIGH);
+    analogWrite(PIN_Motor_PWMA, 0);
+    analogWrite(PIN_Motor_PWMB, speed);
 }
 
 /*
