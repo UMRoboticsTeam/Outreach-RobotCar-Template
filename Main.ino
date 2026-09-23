@@ -1,5 +1,6 @@
-#include <Servo.h>
-#include <string.h>
+
+
+
 //Motor Pin definitions. A = Right, B = Left
 #define PIN_Motor_PWMA 5 //right motor PWM
 #define PIN_Motor_PWMB 6 //left Motor PWM
@@ -22,23 +23,24 @@
 #define IR_RECEIVE_PIN 9
 
 
-
-
- int time = 0;
+ 
 void setup() {
- Serial.begin(9600);
- pinMode(TRIG, OUTPUT);
- pinMode(ECHO, INPUT);
- Serial.println("Starting Program in 3 seconds");
- delay(3000);//3 second delay
-
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  LineTrackerSetup();
+  Serial.begin(9600);
+  
 }
-
-
+int primeOffset[] = {211, 251, 311, 353};
 void loop() {
-
+    delay(60+primeOffset[1]);
+    
+    //Your code here: 
+    
 
 }
+
+
 
 
 /*

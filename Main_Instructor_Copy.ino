@@ -1,5 +1,3 @@
-#include <Servo.h>
-#include <IRremote.hpp>
 
 
 //Motor Pin definitions. A = Right, B = Left
@@ -24,29 +22,30 @@
 #define IR_RECEIVE_PIN 9
 
 
-decode_results results;
-boolean running = false;
 void setup() {
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
   LineTrackerSetup();
   Serial.begin(9600);
-  IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
-  Serial.println("Starting Program in 3 seconds");
-  delay(3000);//3 second delay
+
 }
+
+
+float duration, distance;
+int primeOffset[] = {11,37,61,97};
 
 void loop() {
-
-
+  
+  delay(60+primeOffset[1]);
+     
+  if(measureDistance()<50){
+    driveForward(255);
+  }else{
+    driveRight(150);
+  }
+  
 }
 
-void combat(){
-    delay(53); //prime number to prevent robots from pinging each other at the sametime.
-    if(measureDistance<40){
-      driveForward(255);
-    }else{
-      spinRight(100):
-    }
-}
 
 
 /*
@@ -57,21 +56,19 @@ void combat(){
 int measureDistance()
 {
   //Making sure trigger is disabled to avoid echos.
-  digitalWrite(TRIG,LOW);
-  delayMicroseconds(20); //waiting for echos to clear
-
-  //sending 10 microsecond pulse.
-  digitalWrite(TRIG, HIGH); 
-  delayMicroseconds(10); 
-
-  //disabling trigger
-  digitalWrite(TRIG, LOW); 
-  delayMicroseconds(2);
-  
-  //calculating distance using speed of sound. Divide by 2 because sensor measures time of wave there and back
-  int distance = (pulseIn(ECHO,HIGH)*0.034)/2;
- 
-  return distance;
+    float sum = 0;
+  const int samples = 5;
+  for (int i = 0; i < samples; i++) {
+    digitalWrite(TRIG, LOW);
+    delayMicroseconds(20);
+    digitalWrite(TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG, LOW);
+    long duration = pulseIn(ECHO, HIGH, 25000);
+    if (duration > 0) sum += (duration * 0.0343) / 2;
+    delay(10);
+  }
+  return sum / samples;
 }
 
 /*
