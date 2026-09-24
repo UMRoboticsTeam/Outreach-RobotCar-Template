@@ -36,6 +36,7 @@ int primeOffset[] = {11,37,61,97};
 
 void loop() {
   
+  //prime offset is here to try and prevent robots from using ultrasonic sensors at the same time.
   delay(60+primeOffset[1]);
      
   if(measureDistance()<50){

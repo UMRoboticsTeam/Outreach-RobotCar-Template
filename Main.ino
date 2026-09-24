@@ -31,17 +31,13 @@ void setup() {
   Serial.begin(9600);
   
 }
+
 int primeOffset[] = {211, 251, 311, 353};
 void loop() {
     delay(60+primeOffset[1]);
     
     //Your code here: 
-    
-
 }
-
-
-
 
 /*
  * Uses Ultrasonic sensor to measure distance.
@@ -88,7 +84,6 @@ void driveReverse(int speed){
   analogWrite(PIN_Motor_PWMA, speed);
   analogWrite(PIN_Motor_PWMB, speed);
 }
-
 
 /*
  * Function turns the robot car to the right. Spins right left wheels forward, right wheels backward.
@@ -147,7 +142,6 @@ float LineMiddle(){
 float LineLeft(){
   return analogRead(PIN_ITR20001_L);
 }
-
 
 void LineTrackerSetup(){
   pinMode(PIN_ITR20001_R, INPUT);
