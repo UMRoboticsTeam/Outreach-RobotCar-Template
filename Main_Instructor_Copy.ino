@@ -1,148 +1,137 @@
-#include <Servo.h>
 #include <IRremote.hpp>
 
+// Motor pin definitions. A = Right side, B = Left side
+#define RIGHT_SPEED_PIN 5   // PWM pin: controls how FAST the right motors spin
+#define LEFT_SPEED_PIN  6   // PWM pin: controls how FAST the left motors spin
+#define RIGHT_DIR_PIN   7   // HIGH = right motors forward, LOW = backward
+#define LEFT_DIR_PIN    8   // HIGH = left motors forward, LOW = backward
+#define STANDBY_PIN     3   // HIGH = motors ON, LOW = motors OFF
 
-//Motor Pin definitions. A = Right, B = Left
-#define PIN_Motor_PWMA 5 //right motor PWM
-#define PIN_Motor_PWMB 6 //left Motor PWM
-#define PIN_Motor_BIN_1 8 //Write Motor Speed
-#define PIN_Motor_AIN_1 7
-#define PIN_Motor_STBY 3
+#define IR_PIN 9            // The IR receiver is plugged into pin 9
 
-//Line tracker pins
-#define PIN_ITR20001_L A2
-#define PIN_ITR20001_M A1
-#define PIN_ITR20001_R A0
+// IR remote button codes
+#define BTN_UP     0x46
+#define BTN_DOWN   0x15
+#define BTN_LEFT   0x44
+#define BTN_RIGHT  0x43
 
-//Ultrasonic PIN definitions
-#define ECHO 12
-#define TRIG 13
-
-//Servo motor pin
-#define ULTRA_Serv 10 //servo motor for ultra sensor.
-
-#define IR_RECEIVE_PIN 9
+//Error 1:
+// There is no value assigned to MOVE_TIME_MS and speed
+const unsigned long MOVE_TIME_MS = 300;       // How long the car keeps moving (in milliseconds) after the last signal from the remote so a quick tap moves the car for about this long.
+const int speed = 200;
 
 
-decode_results results;
-boolean running = false;
+uint8_t lastButton = 0;             // Remembers the last button we pressed
+unsigned long lastSignalTime = 0;   // When we last heard from the remote
+bool isMoving = false;              // Is the car moving right now?
+
+// setup() runs once when the car turns on
 void setup() {
-  LineTrackerSetup();
-  Serial.begin(9600);
-  IrReceiver.begin(IR_RECEIVE_PIN, ENABLE_LED_FEEDBACK);
-  Serial.println("Starting Program in 3 seconds");
-  delay(3000);//3 second delay
+  Serial.begin(9600);               // Lets us print messages to the serial monitor
+
+  pinMode(RIGHT_SPEED_PIN, OUTPUT);
+  pinMode(LEFT_SPEED_PIN, OUTPUT);
+  pinMode(RIGHT_DIR_PIN, OUTPUT);
+  pinMode(LEFT_DIR_PIN, OUTPUT);
+  pinMode(STANDBY_PIN, OUTPUT);
+
+  stopCar();                        // Start with the car not moving
+
+  // Start listening to the remote
+  IrReceiver.begin(IR_PIN, DISABLE_LED_FEEDBACK);
+  Serial.println("Ready! Press a button on the remote.");
 }
 
 void loop() {
 
+  // Did the remote send us something?
+  if (IrReceiver.decode()) {
+    uint8_t button = IrReceiver.decodedIRData.command;                          // Stores the button pressed in "button" variable
+    bool buttonHeld = IrReceiver.decodedIRData.flags & IRDATA_FLAGS_IS_REPEAT;    // Is the button held down?
+    bool isGoodSignal = IrReceiver.decodedIRData.protocol != UNKNOWN;           // Not noise?
+    IrReceiver.resume();            // Get ready for the next signal
 
-}
+    if (isGoodSignal) {
+      // If the button is being HELD, the remote sends "repeat" signals.
+      // So we just use the last button we saw.
+      if (buttonHeld) {
+        button = lastButton;
+      } else {
+        lastButton = button;
+        Serial.print("Button code: 0x");    // Prints the code so we can see it
+        Serial.println(button, HEX);
+      }
 
-void combat(){
-    delay(53); //prime number to prevent robots from pinging each other at the sametime.
-    if(measureDistance<40){
-      driveForward(255);
-    }else{
-      spinRight(100):
+      lastSignalTime = millis();            // Remember WHEN we heard it
+      buttonLogic(button);                  // Do what that button says
     }
+  }
+
+  // If we haven't heard from the remote for MOVE_TIME_MS
+  // (button tapped or let go), stop the car.
+  if (isMoving && (millis() - lastSignalTime > MOVE_TIME_MS)) {
+    stopCar();
+  }
 }
 
 
-/*
- * Uses Ultrasonic sensor to measure distance.
- * 
- * returns an int value representing the distance of an object infront of the sensor in CM. 
- */
-int measureDistance()
-{
-  //Making sure trigger is disabled to avoid echos.
-  digitalWrite(TRIG,LOW);
-  delayMicroseconds(20); //waiting for echos to clear
-
-  //sending 10 microsecond pulse.
-  digitalWrite(TRIG, HIGH); 
-  delayMicroseconds(10); 
-
-  //disabling trigger
-  digitalWrite(TRIG, LOW); 
-  delayMicroseconds(2);
-  
-  //calculating distance using speed of sound. Divide by 2 because sensor measures time of wave there and back
-  int distance = (pulseIn(ECHO,HIGH)*0.034)/2;
- 
-  return distance;
+// Error 2:
+// This function decides what the car does for each button
+// Use the function list on your reference sheet to solve this
+void buttonLogic(uint8_t button) {
+  switch (button) {
+    case  BTN_UP:    driveForward();  
+          isMoving = true;
+          break;
+    case  BTN_DOWN:  driveBackward();
+          isMoving = true;
+          break;
+    case  BTN_LEFT:  turnLeft();
+          isMoving = true;
+          break;
+    case  BTN_RIGHT: turnRight();
+          isMoving = true;
+          break;
+  }
 }
 
-/*
- * Sets Motors to drive foward
- */
-void driveForward(int speed)
-{
-  digitalWrite(PIN_Motor_STBY, HIGH);
-  digitalWrite(PIN_Motor_AIN_1, HIGH);
-  digitalWrite(PIN_Motor_BIN_1, HIGH);
-  analogWrite(PIN_Motor_PWMA, speed);
-  analogWrite(PIN_Motor_PWMB, speed);
+void driveForward() {
+  digitalWrite(STANDBY_PIN, HIGH);      // Turn motors ON
+  digitalWrite(RIGHT_DIR_PIN, HIGH);    // Right side forward
+  digitalWrite(LEFT_DIR_PIN, HIGH);     // Left side forward
+  analogWrite(RIGHT_SPEED_PIN, speed);  // Set right speed
+  analogWrite(LEFT_SPEED_PIN, speed);   // Set left speed
 }
 
-/*
- * Sets motors to drive in reverse.
- */
-void driveReverse(int speed){
-  digitalWrite(PIN_Motor_STBY, HIGH);
-  digitalWrite(PIN_Motor_AIN_1, LOW);
-  digitalWrite(PIN_Motor_BIN_1, LOW);
-  analogWrite(PIN_Motor_PWMA, speed);
-  analogWrite(PIN_Motor_PWMB, speed);
+void driveBackward() {
+  digitalWrite(STANDBY_PIN, HIGH);
+  digitalWrite(RIGHT_DIR_PIN, LOW);     // Right side backward
+  digitalWrite(LEFT_DIR_PIN, LOW);      // Left side backward
+  analogWrite(RIGHT_SPEED_PIN, speed);
+  analogWrite(LEFT_SPEED_PIN, speed);
 }
 
-
-/*
- * Function turns the robot car to the right. Spins right left wheels forward, right wheels backward.
- */
-void driveRight(int speed){
-  digitalWrite(PIN_Motor_STBY, HIGH);
-  digitalWrite(PIN_Motor_AIN_1, LOW);
-  digitalWrite(PIN_Motor_BIN_1, HIGH);
-  analogWrite(PIN_Motor_PWMA, speed);
-  analogWrite(PIN_Motor_PWMB, speed);
+// To turn right, the car spins: left side forward, right side backward
+void turnRight() {
+  digitalWrite(STANDBY_PIN, HIGH);
+  digitalWrite(RIGHT_DIR_PIN, LOW);     // Right side backward
+  digitalWrite(LEFT_DIR_PIN, HIGH);     // Left side forward
+  analogWrite(RIGHT_SPEED_PIN, speed);
+  analogWrite(LEFT_SPEED_PIN, speed);
 }
 
-/*
- * Function turns the robot car to the right. Spins right left wheel backward, right wheels forward.
- */
-void driveLeft(int speed){
-  digitalWrite(PIN_Motor_STBY, HIGH);
-  digitalWrite(PIN_Motor_AIN_1, HIGH);
-  digitalWrite(PIN_Motor_BIN_1, LOW);
-  analogWrite(PIN_Motor_PWMA, speed);
-  analogWrite(PIN_Motor_PWMB, speed);
+// To turn left, the car spins: right side forward, left side backward
+void turnLeft() {
+  digitalWrite(STANDBY_PIN, HIGH);
+  digitalWrite(RIGHT_DIR_PIN, HIGH);    // Right side forward
+  digitalWrite(LEFT_DIR_PIN, LOW);      // Left side backward
+  analogWrite(RIGHT_SPEED_PIN, speed);
+  analogWrite(LEFT_SPEED_PIN, speed);
 }
 
-/*
- * Stops motors from turning
- */
-void driveStop(){
-  digitalWrite(PIN_Motor_STBY, LOW);
-  analogWrite(PIN_Motor_PWMA, 0);
-  analogWrite(PIN_Motor_PWMB, 0);
-}
-
-float LineRight(){
-  return analogRead(PIN_ITR20001_R);
-}
-
-float LineMiddle(){
-  return analogRead(PIN_ITR20001_M);
-}
-float LineLeft(){
-  return analogRead(PIN_ITR20001_L);
-}
-
-
-void LineTrackerSetup(){
-  pinMode(PIN_ITR20001_R, INPUT);
-  pinMode(PIN_ITR20001_M, INPUT);
-  pinMode(PIN_ITR20001_L, INPUT);
+void stopCar() {
+  digitalWrite(STANDBY_PIN, LOW);       // Turn motors OFF
+  analogWrite(RIGHT_SPEED_PIN, 0);
+  analogWrite(LEFT_SPEED_PIN, 0);
+  isMoving = false;
 }
